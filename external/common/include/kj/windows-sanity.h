@@ -19,29 +19,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef CAPNP_PRETTY_PRINT_H_
-#define CAPNP_PRETTY_PRINT_H_
+#ifndef KJ_WINDOWS_SANITY_H_
+#define KJ_WINDOWS_SANITY_H_
 
-#if defined(__GNUC__) && !CAPNP_HEADER_WARNINGS
+#if defined(__GNUC__) && !KJ_HEADER_WARNINGS
 #pragma GCC system_header
 #endif
 
-#include "dynamic.h"
-#include <kj/string-tree.h>
+#ifndef _INC_WINDOWS
+#error "windows.h needs to be included before kj/windows-sanity.h (or perhaps you don't need either?)"
+#endif
 
-namespace capnp {
+namespace win32 {
+  const auto ERROR_ = ERROR;
+#undef ERROR
+  const auto ERROR = ERROR_;
+}
 
-kj::StringTree prettyPrint(DynamicStruct::Reader value);
-kj::StringTree prettyPrint(DynamicStruct::Builder value);
-kj::StringTree prettyPrint(DynamicList::Reader value);
-kj::StringTree prettyPrint(DynamicList::Builder value);
-// Print the given Cap'n Proto struct or list with nice indentation.  Note that you can pass any
-// struct or list reader or builder type to this method, since they can be implicitly converted
-// to one of the dynamic types.
-//
-// If you don't want indentation, just use the value's KJ stringifier (e.g. pass it to kj::str(),
-// any of the KJ debug macros, etc.).
+using win32::ERROR;
 
-}  // namespace capnp
-
-#endif  // PRETTY_PRINT_H_
+#endif  // KJ_WINDOWS_SANITY_H_

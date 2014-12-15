@@ -19,29 +19,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef CAPNP_PRETTY_PRINT_H_
-#define CAPNP_PRETTY_PRINT_H_
+#ifndef CAPNP_SCHEMA_LITE_H_
+#define CAPNP_SCHEMA_LITE_H_
 
 #if defined(__GNUC__) && !CAPNP_HEADER_WARNINGS
 #pragma GCC system_header
 #endif
 
-#include "dynamic.h"
-#include <kj/string-tree.h>
+#include <capnp/schema.capnp.h>
+#include "message.h"
 
 namespace capnp {
 
-kj::StringTree prettyPrint(DynamicStruct::Reader value);
-kj::StringTree prettyPrint(DynamicStruct::Builder value);
-kj::StringTree prettyPrint(DynamicList::Reader value);
-kj::StringTree prettyPrint(DynamicList::Builder value);
-// Print the given Cap'n Proto struct or list with nice indentation.  Note that you can pass any
-// struct or list reader or builder type to this method, since they can be implicitly converted
-// to one of the dynamic types.
-//
-// If you don't want indentation, just use the value's KJ stringifier (e.g. pass it to kj::str(),
-// any of the KJ debug macros, etc.).
+template <typename T, typename CapnpPrivate = typename T::_capnpPrivate>
+inline schema::Node::Reader schemaProto() {
+  // Get the schema::Node for this type's schema. This function works even in lite mode.
+  return readMessageUnchecked<schema::Node>(CapnpPrivate::encodedSchema());
+}
+
+template <typename T, uint64_t id = schemas::EnumInfo<T>::typeId>
+inline schema::Node::Reader schemaProto() {
+  // Get the schema::Node for this type's schema. This function works even in lite mode.
+  return readMessageUnchecked<schema::Node>(schemas::EnumInfo<T>::encodedSchema());
+}
 
 }  // namespace capnp
 
-#endif  // PRETTY_PRINT_H_
+#endif  // CAPNP_SCHEMA_LITE_H_
