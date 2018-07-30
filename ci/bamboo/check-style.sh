@@ -1,8 +1,8 @@
 #!/bin/bash
 # ----------------------------------------------------------------------
 # Numenta Platform for Intelligent Computing (NuPIC)
-# Copyright (C) 2013-7, Numenta, Inc.  Unless you have an agreement
-# with Numenta, Inc., for a separate license for this software code, the
+# Copyright (C) 2016, Numenta, Inc.  Unless you have purchased from
+# Numenta, Inc. a separate commercial license for this software code, the
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,19 +20,15 @@
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
-echo
-echo Running deploy_s3-osx.sh...
-echo
+set -o errexit
 
-#Organize files for upload
-cp bindings/py/requirements.txt dist/
-mkdir -p dist/include/nupic
-mkdir release
-cp build/release/include/nupic/Version.hpp dist/include/nupic/
-tar -zcv -f release/nupic_core-${CIRCLE_SHA1}-darwin64.tar.gz dist
+if git clang-format --diff master | grep -q '^diff'
+then
+    echo "ERROR: Code changes do not comply with numenta's code style rules."
+    echo "Please run 'git fetch upstream && git clang-format upstream/master' before commit."
+    echo "See 'githooks/README.md' for instructions on how to install clang-format on your platform."
+    git clang-format --diff master
+    exit 1
+fi
+exit 0
 
-
-# awscli needs to be manually installed on Circle's OS X
-pip install awscli --user
-
-aws s3 cp release/nupic_core-${CIRCLE_SHA1}-darwin64.tar.gz s3://artifacts.numenta.org/numenta/nupic.core/circle/
