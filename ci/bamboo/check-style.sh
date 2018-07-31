@@ -1,8 +1,8 @@
 #!/bin/bash
 # ----------------------------------------------------------------------
 # Numenta Platform for Intelligent Computing (NuPIC)
-# Copyright (C) 2013-5, Numenta, Inc.  Unless you have an agreement
-# with Numenta, Inc., for a separate license for this software code, the
+# Copyright (C) 2016, Numenta, Inc.  Unless you have purchased from
+# Numenta, Inc. a separate commercial license for this software code, the
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,23 +20,15 @@
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
-echo
-echo Running before_install-osx.sh...
-echo
+set -o errexit
 
-#if [ $CC = 'gcc' ]; then
-#    export CC='gcc-4.8'
-#    export CXX='g++-4.8'
-#fi
+if git clang-format --diff master | grep -q '^diff'
+then
+    echo "ERROR: Code changes do not comply with numenta's code style rules."
+    echo "Please run 'git fetch upstream && git clang-format upstream/master' before commit."
+    echo "See 'githooks/README.md' for instructions on how to install clang-format on your platform."
+    git clang-format --diff master
+    exit 1
+fi
+exit 0
 
-#if [ $CC = 'clang' ]; then
-#    export CC='clang'
-#    export CXX='clang++'
-#fi
-
-echo "Installing pip, setuptools, and wheel"
-sudo pip install --upgrade pip
-pip install --upgrade --user --ignore-installed setuptools wheel
-
-echo "Installing Python dependencies"
-pip install --use-wheel --user -r bindings/py/requirements.txt  --quiet || exit
