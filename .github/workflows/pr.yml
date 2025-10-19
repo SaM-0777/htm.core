@@ -62,23 +62,31 @@ jobs:
       run: |
         python -m pip install setuptools wheel
 
-    - name: create virtual environment (Linux & macOS only)
+    - name: Setup venv and build htmcore (Linux & macOS)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
         python -m venv .venv
         source .venv/bin/activate
+        python htm_install.py
 
-    - name: create virtual environment (Windows only)
+    - name: Setup venv and build htmcore (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         python -m venv .venv
         .venv\Scripts\activate.bat
+        python htm_install.py
 
-    - name: build htmcore with htm_install.py
-      run: python htm_install.py
+    - name: C++ & Python Tests (Linux & macOS)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: |
+        source .venv/bin/activate
+        python htm_test.py
 
-    - name: C++ & Python Tests
-      run: python htm_test.py
+    - name: C++ & Python Tests (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        .venv\Scripts\activate.bat
+        python htm_test.py
 
     - name: Memory leaks check (valgrind)
       if: matrix.os == 'ubuntu-latest'
