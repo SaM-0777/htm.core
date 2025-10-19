@@ -20,15 +20,15 @@ jobs:
     strategy:
       #max-parallel: 4
       matrix:
-        python-version: [3.9.x]
+        python-version: [3.13.x]
         # https://docs.github.com/en/actions/reference/specifications-for-github-hosted-runners
         os: [ubuntu-latest, windows-latest, macos-26-xlarge] 
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }} for PR
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -85,7 +85,7 @@ jobs:
       if: matrix.os == 'ubuntu-20.04'
       run: LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/build/Release/lib ./build/Release/bin/dynamic_hello 1000 || exit 4
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: "pr_build"
         path: build/Release/distr/dist
@@ -97,7 +97,7 @@ jobs:
     #currently cannot run on Linux & Debug due to a bug in YAML parser: issue #218
     runs-on: macOS-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install dependencies (Debug)
       run: |
