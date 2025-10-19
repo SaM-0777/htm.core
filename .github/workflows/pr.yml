@@ -62,7 +62,19 @@ jobs:
       run: |
         python -m pip install setuptools wheel
 
-    - name: build htmcore with setup.py
+    - name: create virtual environment (Linux & macOS only)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+
+    - name: create virtual environment (Windows only)
+      if: matrix.os == 'windows-latest'
+      run: |
+        python -m venv .venv
+        .venv\Scripts\activate.bat
+
+    - name: build htmcore with htm_install.py
       run: python htm_install.py
 
     - name: C++ & Python Tests
