@@ -73,8 +73,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         python -m venv .venv
-        .venv\Scripts\activate.bat
-        python htm_install.py
+        .venv\Scripts\python.exe htm_install.py
 
     - name: C++ & Python Tests (Linux & macOS)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
@@ -86,7 +85,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         .venv\Scripts\activate.bat
-        python htm_test.py
+        .venv\Scripts\python.exe htm_test.py
 
     - name: Memory leaks check (valgrind)
       if: matrix.os == 'ubuntu-latest'
