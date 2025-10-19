@@ -22,7 +22,7 @@ jobs:
       matrix:
         python-version: [3.13.x]
         # https://docs.github.com/en/actions/reference/specifications-for-github-hosted-runners
-        os: [ubuntu-latest, windows-latest, macos-26-xlarge] 
+        os: [ubuntu-latest, windows-latest, macos-latest] 
 
     steps:
     - uses: actions/checkout@v4
@@ -60,17 +60,16 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install -r requirements.txt
-        python setup.py configure
+        python -m pip install setuptools wheel
 
     - name: build htmcore with setup.py
-      run: python setup.py install --user --force
+      run: python htm_install.py
 
     - name: C++ & Python Tests
-      run: python setup.py test
+      run: python htm_test.py
 
     - name: Memory leaks check (valgrind)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get -y install valgrind
         LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/build/Release/lib valgrind  --show-leak-kinds=definite,indirect,possible,reachable --track-origins=yes --num-callers=40 --error-exitcode=3 ./build/Release/bin/hello 5 || exit 1
@@ -82,7 +81,7 @@ jobs:
       run: ./build/Release/bin/napi_hello 1000 || exit 3
 
     - name: Hello example (dynamically linked)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-latest'
       run: LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/build/Release/lib ./build/Release/bin/dynamic_hello 1000 || exit 4
 
     - uses: actions/upload-artifact@v4
@@ -90,12 +89,10 @@ jobs:
         name: "pr_build"
         path: build/Release/distr/dist
 
-
-
   build-debug:
     name: Build and test in Debug mode
     #currently cannot run on Linux & Debug due to a bug in YAML parser: issue #218
-    runs-on: macOS-latest
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
 
