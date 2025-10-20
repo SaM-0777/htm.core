@@ -118,6 +118,10 @@ jobs:
     - name: Install pybind11 (via pip)
       run: pip install pybind11
 
+    - name: Install pybind11 (Homebrew)
+      run: |
+        brew install pybind11
+
     - name: Install dependencies (Debug)
       run: |
         mkdir -p build/scripts
