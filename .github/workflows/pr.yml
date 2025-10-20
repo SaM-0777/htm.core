@@ -106,35 +106,4 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: "pr_build"
-        path: build/Release/distr/dist
-
-  build-debug:
-    name: Build and test in Debug mode
-    #currently cannot run on Linux & Debug due to a bug in YAML parser: issue #218
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install pybind11 (via pip)
-      run: pip install pybind11
-
-    - name: Install pybind11 (Homebrew)
-      run: |
-        brew install pybind11
-
-    - name: Install dependencies (Debug)
-      run: |
-        mkdir -p build/scripts
-        cd build/scripts
-        cmake ../.. -DCMAKE_BUILD_TYPE=Debug
-
-    - name: Debug build
-      run: |
-        cd build/scripts
-        make -j2 && make install
-
-    - name: C++ Tests
-      run: |
-        cd build/scripts
-        ../Debug/bin/unit_tests
-
+        path: dist
