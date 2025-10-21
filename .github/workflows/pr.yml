@@ -105,5 +105,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: htm-core-${{ matrix.os }}-py-${{ matrix.python-version }}-${{ github.branch }}-${{ github.sha }}
+        name: htm-core-${{ matrix.os }}-py-${{ matrix.python-version }}-${{ github.ref_name }}-${{ github.sha }}
         path: dist/*.whl
