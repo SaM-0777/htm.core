@@ -1,0 +1,6 @@
+{
+    "epochs": 5,
+    "airport": "EGLC",
+    "sp_columns": 128,
+    "tm_cells_per_column": 32
+}

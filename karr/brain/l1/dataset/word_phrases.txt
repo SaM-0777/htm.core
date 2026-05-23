@@ -1,0 +1,26 @@
+apple
+ball
+cat
+dog
+elephant
+fish
+goat
+hen
+ice cream
+jug
+kite
+lion
+monkey
+nest
+orange
+parrot
+queen
+rabbit
+sun
+tiger
+umbrella
+van
+watch
+xylophone
+yak
+zebra
