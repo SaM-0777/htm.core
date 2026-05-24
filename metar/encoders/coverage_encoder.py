@@ -19,10 +19,6 @@ class CoverageEncoderConfig:
 
 
 class CoverageEncoder:
-    """
-    Hardcoded with graded semantic overlap based on oktas distance
-    """
-
     def __init__(self, config: CoverageEncoderConfig | None = None):
         self.config = config or CoverageEncoderConfig()
 
@@ -42,8 +38,6 @@ class CoverageEncoder:
             sdr = SDR(self.config.sdr_size)
             sdr.sparse = indices
             self.category_sdrs[i] = sdr
-
-        print("CoverageEncoder (Graded Semantic Overlap) ready")
 
     @property
     def output_size(self) -> int:

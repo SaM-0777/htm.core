@@ -1,13 +1,10 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from math import log1p
-
 from htm.bindings.encoders import (
     ScalarEncoder,
     ScalarEncoderParameters,
 )
-
 from htm.bindings.sdr import SDR
 
 
@@ -22,11 +19,6 @@ class VisibilityEncoderConfig:
 
 
 class VisibilityEncoder:
-    """
-    Extremely simple visibility encoder.
-    Takes only a number (meters) and encodes it.
-    """
-
     def __init__(self, config: VisibilityEncoderConfig | None = None):
         self.config = config or VisibilityEncoderConfig()
         self.output_sdr = SDR(self.config.sdr_size)
@@ -35,16 +27,10 @@ class VisibilityEncoder:
         params.minimum = log1p(self.config.minimum_visibility_m)
         params.maximum = log1p(self.config.maximum_visibility_m)
         params.activeBits = self.config.active_bits
-        # params.size = self.config.sdr_size
         params.resolution = 0.12
         params.periodic = False
         self.encoder = ScalarEncoder(params)
         self.output_sdr = SDR(self.encoder.dimensions)
-
-        print(
-            f"VisibilityEncoder (Simple Manual) ready → size={self.config.sdr_size}, "
-            f"active_bits={self.config.active_bits}"
-        )
 
     @property
     def output_size(self) -> int:
@@ -57,7 +43,6 @@ class VisibilityEncoder:
         return tuple(self.output_sdr.dimensions)
 
     def encode(self, visibility_meters: float | int) -> SDR:
-        """Takes only a number and encodes it"""
         value = float(visibility_meters)
         value = min(max(value, 0.0), 20000.0)
 
