@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from htm.bindings.sdr import SDR
 
-from encoders.coverage_encoder import CoverageEncoder
-from encoders.cloud_height_encoder import CloudHeightEncoder
-from encoders.cloud_type_encoder import CloudTypeEncoder
+from metar.encoders.coverage_encoder import CoverageEncoder
+from metar.encoders.cloud_height_encoder import CloudHeightEncoder
+from metar.encoders.cloud_type_encoder import CloudTypeEncoder
 
 
 @dataclass(frozen=True)

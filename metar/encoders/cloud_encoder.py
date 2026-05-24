@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, List, Dict
 from htm.bindings.sdr import SDR
-from encoders.cloud_layer_encoder import CloudLayerEncoder
+from metar.encoders.cloud_layer_encoder import CloudLayerEncoder
 
 
 @dataclass(frozen=True)
