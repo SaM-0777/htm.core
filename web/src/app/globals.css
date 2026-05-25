@@ -24,3 +24,36 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer utilities {
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .hide-input-arrow {
+    -moz-appearance: textfield;
+    /* Firefox */
+
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      /* Chrome, Safari, Edge, Opera */
+      margin: 0;
+    }
+
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      /* Chrome, Safari, Edge, Opera */
+      margin: 0;
+    }
+  }
+}

@@ -2,7 +2,7 @@ export interface MetarValues {
   temperature: number;
   pressure: number;
   dewPoint: number;
-  windSpeed: number;
+  //windSpeed: number;
 }
 
 export const metarParams = [
@@ -30,12 +30,12 @@ export const metarParams = [
     max: 50,
     unit: "°C",
   },
-  {
-    id: "windSpeed",
-    label: "Wind Speed",
-    min: 0,
-    default: 12,
-    max: 100,
-    unit: "kt",
-  },
+  //{
+  //  id: "windSpeed",
+  //  label: "Wind Speed",
+  //  min: 0,
+  //  default: 12,
+  //  max: 100,
+  //  unit: "kt",
+  //},
 ];

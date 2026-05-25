@@ -19,6 +19,8 @@ class CloudEncoder:
 
     def encode(self, layers: List[Dict[str, Any]]) -> SDR:
         self.output_sdr.sparse = []
+        
+        print("Cloud layers", layers)
 
         if not layers or (
             len(layers) == 1
