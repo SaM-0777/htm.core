@@ -8,6 +8,7 @@ from metar.encoders.dew_point_encoder import DewPointEncoder
 from metar.encoders.visibility_encoder import VisibilityEncoder
 from metar.encoders.wind_encoder import WindEncoder
 from metar.encoders.cloud_encoder import CloudEncoder
+from metar.encoders.metar_encoder import MetarEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -22,18 +23,33 @@ class HTMOrchestrator:
         self.wind_encoder = WindEncoder()
         self.cloud_encoder = CloudEncoder()
 
+        self.metar_encoder = MetarEncoder()
+
     def encode(self, data: MetarDataInput):
         response_data = {
             "encoders": {},
         }
 
         try:
+            cloud_layers = [
+                (
+                    dict(layer)
+                    if isinstance(layer, dict)
+                    else (
+                        dict(layer.dict())
+                        if hasattr(layer, "dict")
+                        else dict(layer.__dict__)
+                    )
+                )
+                for layer in data.cloud_layers
+            ]
+
             if data.time_recorded is not None:
                 time_sdr = self.time_encoder.encode(data.time_recorded)
                 time_sdr_active_indices = [int(bit) for bit in time_sdr.sparse]
 
                 response_data["encoders"]["recorded_time"] = {
-                    "value_encoded": data.temperature_c,
+                    "value_encoded": data.time_recorded,
                     "size": self.time_encoder.output_size,
                     "active_bits": time_sdr_active_indices,
                     "active_count": len(time_sdr_active_indices),
@@ -109,18 +125,6 @@ class HTMOrchestrator:
                 }
 
             if data.cloud_layers is not None and len(data.cloud_layers) > 0:
-                cloud_layers = [
-                    (
-                        dict(layer)
-                        if isinstance(layer, dict)
-                        else (
-                            dict(layer.dict())
-                            if hasattr(layer, "dict")
-                            else dict(layer.__dict__)
-                        )
-                    )
-                    for layer in data.cloud_layers
-                ]
                 cloud_sdr = self.cloud_encoder.encode(cloud_layers)
                 cloud_sdr_active_indices = [int(bit) for bit in cloud_sdr.sparse]
 
@@ -130,6 +134,27 @@ class HTMOrchestrator:
                     "active_bits": cloud_sdr_active_indices,
                     "active_count": len(cloud_sdr_active_indices),
                 }
+
+            metar_sdr = self.metar_encoder.encode(
+                data.time_recorded,
+                data.pressure_hpa,
+                data.dew_point_c,
+                data.temperature_c,
+                data.visibility,
+                data.wind_direction_deg,
+                data.wind_speed_kt,
+                data.is_wind_variable,
+                data.wind_gust_kt,
+                cloud_layers,
+            )
+            metar_sdr_active_indices = [int(bit) for bit in metar_sdr.sparse]
+
+            response_data["encoders"]["metar"] = {
+                "value_encoded": None,
+                "size": self.metar_encoder.total_size,
+                "active_bits": metar_sdr_active_indices,
+                "active_counts": len(metar_sdr_active_indices),
+            }
 
             return response_data
 

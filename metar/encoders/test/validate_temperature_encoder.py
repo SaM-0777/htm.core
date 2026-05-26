@@ -1,1 +1,22 @@
- 
+from encoders.temperature_encoder import (
+    TemperatureEncoder,
+)
+
+from .scalar_encoder_validation import (
+    validate_single_encoder,
+)
+
+
+def main():
+
+    encoder = TemperatureEncoder()
+
+    validate_single_encoder(
+        encoder=encoder,
+        variable_name="temperature_128_12",
+        value_range=(-80, 80),
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -27,7 +27,7 @@ class WindDirectionValidation:
 
         self.encoder = encoder
 
-        self.output_dir = Path("./output/wind_direction_validation2")
+        self.output_dir = Path("./output/wind_direction_validation_")
 
         self.output_dir.mkdir(
             parents=True,

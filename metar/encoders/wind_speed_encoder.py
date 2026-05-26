@@ -11,8 +11,8 @@ from htm.bindings.sdr import SDR
 class WindSpeedEncoderConfig:
     minimum_kt: float = 0.0
     maximum_kt: float = 150.0
-    active_bits: int = 21
-    sdr_size: int = 512
+    active_bits: int = 12
+    sdr_size: int = 256
     resolution_kt: float = 1.0
     clip_input: bool = True
 

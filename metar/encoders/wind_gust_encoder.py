@@ -12,7 +12,7 @@ class WindGustEncoderConfig:
     minimum_kt: float = 0.0
     maximum_kt: float = 200.0
     sdr_size: int = 256
-    active_bits: int = 11
+    active_bits: int = 12
     clip_input: bool = True
 
 

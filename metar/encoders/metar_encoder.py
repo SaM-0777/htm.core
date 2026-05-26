@@ -1,44 +1,131 @@
+from dataclasses import dataclass
 from datetime import datetime
+from typing import List, Dict, Any
 
 from htm.bindings.sdr import SDR
 
-from model.metar import MetarRecord
+from metar.encoders.time_encoder import TimeEncoder
+from metar.encoders.pressure_encoder import PressureEncoder
+from metar.encoders.dew_point_encoder import DewPointEncoder
+from metar.encoders.visibility_encoder import VisibilityEncoder
+from metar.encoders.temperature_encoder import TemperatureEncoder
+from metar.encoders.wind_encoder import WindEncoder
+from metar.encoders.cloud_encoder import CloudEncoder
 
-from encoders.temperature_encoder import TemperatureEncoder
-from encoders.time_encoder import TimeEncoder
+
+@dataclass(frozen=True)
+class MetarEncoderConfig:
+    padding_bits: int = 144
 
 
 class MetarEncoder:
+    def __init__(self, config: MetarEncoderConfig | None = None):
+        self.config = config or MetarEncoderConfig()
 
-    def __init__(self) -> None:
+        self.time_enc = TimeEncoder()
+        self.pressure_enc = PressureEncoder()
+        self.dew_point_enc = DewPointEncoder()
+        self.temperature_enc = TemperatureEncoder()
+        self.visibility_enc = VisibilityEncoder()
+        self.wind_enc = WindEncoder()
+        self.cloud_enc = CloudEncoder()
 
-        self.temperature_encoder = TemperatureEncoder()
-
-        self.time_encoder = TimeEncoder()
-
-        self.output_width = (
-            self.temperature_encoder.output_width + self.time_encoder.output_width
+        self.total_size = (
+            self.config.padding_bits
+            + self.time_enc.output_size
+            + self.config.padding_bits
+            + self.pressure_enc.output_size
+            + self.config.padding_bits
+            + self.dew_point_enc.output_size
+            + self.config.padding_bits
+            + self.temperature_enc.output_size
+            + self.config.padding_bits
+            + self.visibility_enc.output_size
+            + self.config.padding_bits
+            + self.wind_enc.output_size
+            + self.config.padding_bits
+            + self.cloud_enc.total_size
+            + self.config.padding_bits
         )
 
-    def encode(self, record: MetarRecord) -> SDR:
-        dt = datetime.fromisoformat(record.recordedTime)
+        self.output_sdr = SDR(self.total_size)
 
-        temperature_sdr = self.temperature_encoder.encode(record.temperature)
+    @property
+    def output_size(self) -> int:
+        return self.total_size
 
-        time_sdr = self.time_encoder.encode(dt)
+    def encode(
+        self,
+        recorded_time: datetime,
+        pressure_hpa: float,
+        dew_point_c: float,
+        temperature_c: float,
+        visibility_m: float,
+        wind_direction_deg: float,
+        wind_speed_kt: float,
+        is_wind_variable: bool = False,
+        wind_gust_kt: float | None = None,
+        cloud_layers: List[Dict[str, Any]] | None = None,
+    ) -> SDR:
+        """
+        Encode full METAR record into one unified SDR.
+        recorded_time
+        pressure_hpa
+        dew_point_c
+        temperature_c
+        wind
+        clouds
+        """
+        if cloud_layers is None:
+            cloud_layers = []
 
-        final_sdr = SDR(self.output_width)
+        self.output_sdr.sparse = []
+        offset = 0
 
-        combined_sparse = []
+        offset += self.config.padding_bits
 
-        combined_sparse.extend(temperature_sdr.sparse)
+        # recorded_time
+        time_sdr = self.time_enc.encode(recorded_time)
+        for bit in time_sdr.sparse:
+            self.output_sdr.sparse = list(self.output_sdr.sparse) + [bit + offset]
+        offset += self.time_enc.output_size + self.config.padding_bits
 
-        shifted_time_sparse = [
-            i + self.temperature_encoder.output_width for i in time_sdr.sparse
-        ]
+        if pressure_hpa is not None:
+            pressure_sdr = self.pressure_enc.encode(pressure_hpa)
+            for bit in pressure_sdr.sparse:
+                self.output_sdr.sparse = list(self.output_sdr.sparse) + [bit + offset]
+        offset += self.pressure_enc.output_size + self.config.padding_bits
 
-        combined_sparse.extend(shifted_time_sparse)
+        if dew_point_c is not None:
+            dew_sdr = self.dew_point_enc.encode(dew_point_c)
+            for bit in dew_sdr.sparse:
+                self.output_sdr.sparse = list(self.output_sdr.sparse) + [bit + offset]
+        offset += self.dew_point_enc.output_size + self.config.padding_bits
 
-        final_sdr.sparse = combined_sparse
+        if temperature_c is not None:
+            temp_sdr = self.temperature_enc.encode(temperature_c)
+            for bit in temp_sdr.sparse:
+                self.output_sdr.sparse = list(self.output_sdr.sparse) + [bit + offset]
+        offset += self.temperature_enc.output_size + self.config.padding_bits
 
-        return final_sdr
+        if visibility_m is not None:
+            visibility_sdr = self.visibility_enc.encode(visibility_m)
+            for bit in visibility_sdr.sparse:
+                self.output_sdr.sparse = list(self.output_sdr.sparse) + [bit + offset]
+        offset += self.visibility_enc.output_size + self.config.padding_bits
+
+        wind_sdr = self.wind_enc.encode(
+            direction_degrees=wind_direction_deg,
+            speed_kt=wind_speed_kt,
+            gust_kt=wind_gust_kt,
+            variable_direction=is_wind_variable,
+        )
+        for bit in wind_sdr.sparse:
+            self.output_sdr.sparse = list(self.output_sdr.sparse) + [bit + offset]
+        offset += self.wind_enc.output_size + self.config.padding_bits
+
+        cloud_sdr = self.cloud_enc.encode(cloud_layers)
+        for bit in cloud_sdr.sparse:
+            self.output_sdr.sparse = list(self.output_sdr.sparse) + [bit + offset]
+
+        return self.output_sdr

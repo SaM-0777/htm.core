@@ -10,8 +10,8 @@ from htm.bindings.sdr import SDR
 class DewPointEncoderConfig:
     minimum_celsius: float = -80.0
     maximum_celsius: float = 50.0
-    active_bits: int = 21
-    sdr_size: int = 512
+    active_bits: int = 8
+    sdr_size: int = 192
     resolution_celsius: float = 0.25
     periodic: bool = False
     clip_input: bool = True

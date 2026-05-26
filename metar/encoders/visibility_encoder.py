@@ -10,8 +10,8 @@ from htm.bindings.sdr import SDR
 
 @dataclass(frozen=True)
 class VisibilityEncoderConfig:
-    sdr_size: int = 256
-    active_bits: int = 12
+    sdr_size: int = 192
+    active_bits: int = 8
     clip_input: bool = True
 
     minimum_visibility_m: float = 0.0

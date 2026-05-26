@@ -13,7 +13,7 @@ def main():
 
     validate_single_encoder(
         encoder=encoder,
-        variable_name="pressure",
+        variable_name="pressure_128_12",
         value_range=(870, 1085),
     )
 

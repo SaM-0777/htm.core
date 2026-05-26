@@ -11,12 +11,12 @@ class CloudLayer(BaseModel):
 
 class MetarDataInput(BaseModel):
     time_recorded: datetime
-    temperature_c: Optional[float] = None
-    pressure_hpa: Optional[float] = None
-    dew_point_c: Optional[float] = None
-    visibility: Optional[float] = None
-    wind_direction_deg: Optional[float] = None
-    wind_speed_kt: Optional[float] = None
-    is_wind_variable: Optional[bool] = None
-    wind_gust_kt: Optional[float] = None
+    temperature_c: float
+    pressure_hpa: float
+    dew_point_c: float
+    visibility: float
+    wind_direction_deg: float
+    wind_speed_kt: float
+    wind_gust_kt: float
+    is_wind_variable: bool = False
     cloud_layers: List[CloudLayer] = []

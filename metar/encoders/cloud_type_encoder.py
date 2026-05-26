@@ -21,8 +21,8 @@ CLOUD_TYPE_MAP = {
 
 @dataclass(frozen=True)
 class CloudTypeEncoderConfig:
-    sdr_size: int = 128
-    active_bits: int = 16
+    sdr_size: int = 256
+    active_bits: int = 11
 
 
 class CloudTypeEncoder:

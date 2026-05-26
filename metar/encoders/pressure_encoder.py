@@ -7,8 +7,8 @@ from htm.bindings.sdr import SDR
 class PressureEncoderConfig:
     minimum_hpa: float = 850.0
     maximum_hpa: float = 1100.0
-    active_bits: int = 21
-    sdr_size: int = 512
+    active_bits: int = 8
+    sdr_size: int = 192
     resolution_hpa: float = 0.5
     clip_input: bool = True
 

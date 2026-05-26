@@ -4,8 +4,8 @@ from htm.bindings.sdr import SDR
 
 @dataclass(frozen=True)
 class CloudHeightEncoderConfig:
-    sdr_size: int = 128
-    active_bits: int = 16
+    sdr_size: int = 256
+    active_bits: int = 11
 
 
 class CloudHeightEncoder:

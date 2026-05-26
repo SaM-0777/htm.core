@@ -13,7 +13,7 @@ class WindDirectionEncoderConfig:
     resolution: float = 3.0
     periodic: bool = True
     clip_input: bool = True
-    variable_flag_bits: int = 5
+    variable_flag_bits: int = 4
 
 
 class WindDirectionEncoder:
