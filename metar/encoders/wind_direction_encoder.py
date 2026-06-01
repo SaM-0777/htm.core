@@ -42,7 +42,12 @@ class WindDirectionEncoder:
     def output_dimensions(self) -> tuple[int]:
         return self._output_dimensions
 
-    def encode(self, direction_degrees: float, variable: bool = False) -> SDR:
+    def encode(self, direction_degrees: float | None, variable: bool = False) -> SDR:
+        if direction_degrees == None:
+            empty_sdr = SDR(self.output_dimensions)
+            empty_sdr.zero()
+            return empty_sdr
+
         value = float(direction_degrees)
 
         if self.config.clip_input:

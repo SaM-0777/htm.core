@@ -61,7 +61,7 @@ class MetarEncoder:
         dew_point_c: float,
         temperature_c: float,
         visibility_m: float,
-        wind_direction_deg: float,
+        wind_direction_deg: float | None,
         wind_speed_kt: float,
         is_wind_variable: bool = False,
         wind_gust_kt: float | None = None,

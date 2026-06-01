@@ -30,8 +30,8 @@ class CloudEncoder:
 
         for i, layer in enumerate(sorted_layers[: self.config.max_layers]):
             coverage = layer.get("coverage")
-            height_ft = layer.get("height_ft")
-            cloud_type = layer.get("type")
+            height_ft = layer.get("height_ft") or layer.get("altitude_ft")
+            cloud_type = layer.get("type") or layer.get("cloud_type")
             layer_sdr = self.layer_enc.encode(coverage, height_ft, cloud_type)
             offset = i * self.config.layer_size
             for bit in layer_sdr.sparse:

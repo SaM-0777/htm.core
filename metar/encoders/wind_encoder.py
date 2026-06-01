@@ -55,7 +55,7 @@ class WindEncoder:
 
     def encode(
         self,
-        direction_degrees: float,
+        direction_degrees: float | None,
         speed_kt: float,
         gust_kt: float | None = None,
         variable_direction: bool = False,
