@@ -89,9 +89,9 @@ def plot_column_utilization(
 
 
 def plot_pca(
-    output_sdrs: list[np.ndarray],
+    sp_output_sdrs: list[np.ndarray],
 ):
-    sdrs = np.array(output_sdrs)
+    sdrs = np.array(sp_output_sdrs)
     pca = PCA(n_components=2)
     reduced = pca.fit_transform(sdrs)
 
@@ -110,10 +110,10 @@ def plot_pca(
 
 
 def plot_tsne(
-    output_sdrs: list[np.ndarray],
+    sp_output_sdrs: list[np.ndarray],
 ):
 
-    sdrs = np.array(output_sdrs)
+    sdrs = np.array(sp_output_sdrs)
     tsne = TSNE(
         n_components=2,
         perplexity=20,
@@ -136,11 +136,11 @@ def plot_tsne(
 
 
 def plot_umap(
-    output_sdrs: list[np.ndarray],
+    sp_output_sdrs: list[np.ndarray],
 ):
     import umap
 
-    sdrs = np.array(output_sdrs)
+    sdrs = np.array(sp_output_sdrs)
     reducer = umap.UMAP(
         n_neighbors=15,
         min_dist=0.1,
@@ -163,11 +163,23 @@ def plot_umap(
 
 
 input_sdrs: list[np.ndarray] = []
-output_sdrs: list[np.ndarray] = []
+sp_output_sdrs: list[np.ndarray] = []
 column_usage = Counter()
 active_counts: list[int] = []
 temporal_overlaps: list[float] = []
 prev_output: SDR | None = None
+# TM
+cells_per_column = 13
+total_cells = 1638 * cells_per_column
+active_cells = SDR(total_cells)
+predictive_cells = SDR(total_cells)
+winner_cells = SDR(total_cells)
+prev_predictive: SDR | None = None
+burst_rates: list[float] = []
+prediction_overlaps: list[float] = []
+active_cell_counts: list[int] = []
+predictive_cell_counts: list[int] = []
+cell_usage = Counter()
 
 
 def update_metrices(output_sdr: SDR):
@@ -185,7 +197,86 @@ def update_metrices(output_sdr: SDR):
         temporal_overlaps.append(overlap)
 
     prev_output = output_sdr
-    output_sdrs.append(output_sdr.dense.astype(np.float32))
+    sp_output_sdrs.append(output_sdr.dense.astype(np.float32))
+
+
+def tm_update_metrics(active_columns: SDR):
+    global prev_predictive
+
+    active_count = len(active_cells.sparse)
+    predictive_count = len(predictive_cells.sparse)
+    active_cell_counts.append(active_count)
+    predictive_cell_counts.append(predictive_count)
+
+    for cell in active_cells.sparse:
+        cell_usage[cell] += 1
+
+    bursting_coulmns = len(active_cells.sparse) / cells_per_column
+    active_columns_count = len(active_columns.sparse)
+    burst_rate = bursting_coulmns / max(active_columns_count, 1)
+    burst_rates.append(burst_rate)
+
+    if prev_predictive is not None:
+        predicted_columns = {
+            cell // cells_per_column for cell in prev_predictive.sparse
+        }
+        active_columns_set = {
+            cell // default_parameters["tm"]["cellsPerColumn"]
+            for cell in active_cells.sparse
+        }
+        print(
+            {
+                "predicted_columns": predicted_columns,
+                "active_columns_set": active_columns_set,
+                "cells_per_column": cells_per_column,
+                "prev_predictive.sparse": prev_predictive.sparse,
+                "active_cells.sparse": active_cells.sparse,
+            }
+        )
+        overlap = len(predicted_columns & active_columns_set)
+        denom = max(len(active_columns_set), 1)
+        prediction_overlaps.append(overlap / denom)
+
+    print("CURRENT PREDICTIVE:", len(predictive_cells.sparse))
+    print(predictive_cells.sparse[:20])
+    prev_predictive = SDR(predictive_cells.dimensions)
+    new_predicitve = SDR(predictive_cells.dimensions)
+    new_predicitve.setSDR(predictive_cells)
+    print("COPIED PREDICTIVE:", len(new_predicitve.sparse))
+    print(new_predicitve.sparse[:20])
+    prev_predictive = new_predicitve
+
+
+def tm_dignostics():
+    usage = np.zeros(total_cells, dtype=np.float32)
+
+    for k, v in cell_usage.items():
+        usage[k] = v
+    total = usage.sum()
+
+    if total > 0:
+        probs = usage / total
+        probs = probs[probs > 0]
+        entropy = float(-np.sum(probs * np.log2(probs)))
+    else:
+        entropy = 0.0
+
+    dead_cells = total_cells - len(cell_usage)
+
+    return {
+        "entropy": entropy,
+        "dead_cell_ratio": dead_cells / total_cells,
+        "mean_burst_rate": (float(np.mean(burst_rates)) if burst_rates else 0.0),
+        "mean_prediction_overlap": (
+            float(np.mean(prediction_overlaps)) if prediction_overlaps else 0.0
+        ),
+        "mean_active_cells": (
+            float(np.mean(active_cell_counts)) if active_cell_counts else 0.0
+        ),
+        "mean_predictive_cells": (
+            float(np.mean(predictive_cell_counts)) if predictive_cell_counts else 0.0
+        ),
+    }
 
 
 default_parameters = {
@@ -319,13 +410,27 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         sp.compute(encoding, True, activeColumns)
         sp_info.addData(activeColumns)
         # update metrices
-        result = SDR(activeColumns.dimensions)
-        result.setSDR(activeColumns)
-        update_metrices(result)
+        sp_result = SDR(activeColumns.dimensions)
+        sp_result.setSDR(activeColumns)
+        update_metrices(sp_result)
 
         # Execute Temporal Memory algorithm over active mini-columns.
-        tm.compute(activeColumns, learn=True)
+        tm_output = tm.compute(activeColumns, learn=True)
         tm_info.addData(tm.getActiveCells().flatten())
+        active_cells.sparse = tm.getActiveCells().sparse
+        #predictive_cells.sparse = tm.getPredictiveCells().sparse
+        winner_cells.sparse = tm.getWinnerCells().sparse
+        tm_update_metrics(active_columns=activeColumns)
+        print(
+            "active=",
+            len(active_cells.sparse),
+            "predictive=",
+            len(predictive_cells.sparse),
+            "winner=",
+            len(winner_cells.sparse),
+        )
+        # tm_outputs.append(tm_output.dense.astype(np.float32))
+        print(tm_dignostics())
 
         # Predict what will happen, and then train the predictor based on what just happened.
         pdf = predictor.infer(tm.getActiveCells())
@@ -357,9 +462,9 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     plot_active_columns(active_counts)
     plot_temporal_overlap(temporal_overlaps)
     plot_column_utilization(column_usage, sp.getColumnDimensions()[0])
-    plot_pca(output_sdrs)
-    plot_tsne(output_sdrs)
-    plot_umap(output_sdrs)
+    plot_pca(sp_output_sdrs)
+    plot_tsne(sp_output_sdrs)
+    plot_umap(sp_output_sdrs)
 
     # Shift the predictions so that they are aligned with the input they predict.
     for n_steps, pred_list in predictions.items():

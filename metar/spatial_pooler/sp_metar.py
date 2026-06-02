@@ -5,7 +5,6 @@ from collections import Counter
 from dataclasses import dataclass
 from htm.bindings.sdr import SDR
 from htm.bindings.algorithms import SpatialPooler
-from metar.encoders.metar_encoder import MetarEncoder
 
 
 @dataclass(frozen=True)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
+import time
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -11,6 +12,7 @@ from sklearn.manifold import TSNE
 
 from metar.encoders.metar_encoder import MetarEncoder
 from metar.spatial_pooler.sp_metar import SpatialPoolerMetar
+from metar.temporal_memory.tm_metar import TemporalMemoryMetar
 
 dataset_path = Path("metar/data/metar_parsed_p.json")
 
@@ -84,9 +86,9 @@ def plot_column_utilization(
 
 
 def plot_pca(
-    output_sdrs: list[np.ndarray],
+    sp_outputs: list[np.ndarray],
 ):
-    sdrs = np.array(output_sdrs)
+    sdrs = np.array(sp_outputs)
     pca = PCA(n_components=2)
     reduced = pca.fit_transform(sdrs)
 
@@ -106,10 +108,10 @@ def plot_pca(
 
 
 def plot_tsne(
-    output_sdrs: list[np.ndarray],
+    sp_outputs: list[np.ndarray],
 ):
 
-    sdrs = np.array(output_sdrs)
+    sdrs = np.array(sp_outputs)
     tsne = TSNE(
         n_components=2,
         perplexity=20,
@@ -133,11 +135,11 @@ def plot_tsne(
 
 
 def plot_umap(
-    output_sdrs: list[np.ndarray],
+    sp_outputs: list[np.ndarray],
 ):
     import umap
 
-    sdrs = np.array(output_sdrs)
+    sdrs = np.array(sp_outputs)
     reducer = umap.UMAP(
         n_neighbors=15,
         min_dist=0.1,
@@ -161,11 +163,19 @@ def plot_umap(
 
 
 def main(epochs=5):
+    time_benchmark = time.time()
     metar_encoder = MetarEncoder()
+    print(f"Encoder initiated in {time.time() - time_benchmark}")
+    time_benchmark = time.time()
     sp_metar = SpatialPoolerMetar(metar_encoder.output_size)
+    print(f"SP initiated in {time.time() - time_benchmark}")
+    time_benchmark = time.time()
+    tm_metar = TemporalMemoryMetar(sp_metar.config, config=None)
+    print(f"TM initiated in {time.time() - time_benchmark}")
 
-    output_sdrs: list[np.ndarray] = []
     input_sdrs: list[np.ndarray] = []
+    sp_outputs: list[np.ndarray] = []
+    tm_outputs: list[np.ndarray] = []
 
     with open(dataset_path, "r", encoding="utf-8") as f:
         data_list = json.load(f)
@@ -174,6 +184,7 @@ def main(epochs=5):
 
     print(f"Loaded {len(data_list)} objects")
 
+    time_benchmark = time.time()
     for epoch in range(epochs):
         for i, record in enumerate(data_list):
             try:
@@ -192,14 +203,19 @@ def main(epochs=5):
                     cloud_layers=record.get("clouds", []),
                 )
 
-                output_sdr = sp_metar.compute(
-                    metar_sdr,
-                )
+                sp_output = sp_metar.compute(metar_sdr, learn=True)
+                tm_output = tm_metar.compute(sp_output, learn=True)
+
                 input_sdrs.append(metar_sdr.dense.astype(np.float32))
-                output_sdrs.append(output_sdr.dense.astype(np.float32))
+                sp_outputs.append(sp_output.dense.astype(np.float32))
+                tm_outputs.append(tm_output.dense.astype(np.float32))
 
             except Exception as e:
                 print(f"Epoch {epoch} Record {i+1:4d} | ERROR: {e}")
+
+        print(tm_metar.diagnostics())
+
+    print(f"Training epoch completed in {time.time() - time_benchmark}")
 
     plot_active_columns(sp_metar.active_counts)
     plot_temporal_overlap(sp_metar.temporal_overlaps)
@@ -207,9 +223,9 @@ def main(epochs=5):
         sp_metar.column_usage,
         sp_metar.output_size,
     )
-    plot_pca(output_sdrs)
-    plot_tsne(output_sdrs)
-    plot_umap(output_sdrs)
+    plot_pca(sp_outputs)
+    plot_tsne(sp_outputs)
+    plot_umap(sp_outputs)
 
     diagnostics = sp_metar.diagnostics()
 
